@@ -8,7 +8,7 @@ import (
 
 	"github.com/imagespy/client-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/wndhydrnt/imagespy/source"
+	"github.com/imagespy/imagespy/source"
 )
 
 type apiError struct {

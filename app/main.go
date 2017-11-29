@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 
 	imagespy "github.com/imagespy/client-go"
+	"github.com/imagespy/imagespy/source"
+	"github.com/imagespy/imagespy/web"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/wndhydrnt/imagespy/source"
-	"github.com/wndhydrnt/imagespy/web"
 )
 
 var (
