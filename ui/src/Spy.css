@@ -1,0 +1,7 @@
+.Spy span {
+  font-size: 0.75em;
+}
+
+.Spy td:nth-child(1) {
+  font-weight: 400;
+}
