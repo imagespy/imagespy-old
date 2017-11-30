@@ -1,3 +1,5 @@
+TAG ?= latest
+
 build: build_ui build_server build_image
 
 build_server:
@@ -7,4 +9,4 @@ build_ui:
 	docker run --rm -v "$(PWD)/ui:/ui" --workdir /ui node:9.2.0 bash -c 'PUBLIC_URL=/app yarn build'
 
 build_image:
-	docker build -t imagespy .
+	docker build -t imagespy:$(TAG) .
