@@ -3,11 +3,13 @@ import React, { Component } from 'react';
 import './App.css';
 import SearchBar from './SearchBar';
 import SpyList from './SpyList';
+import Loading from './Loading';
 
 class App extends Component {
   constructor() {
     super();
     this.state = {
+      'loading': true,
       'spies': [],
       'spiesForSearch': []
     };
@@ -19,6 +21,7 @@ class App extends Component {
     .then((r) => {
       this.raw = r.data;
       this.setState({
+        loading: false,
         spies: r.data,
         spiesForSearch: r.data
       })
@@ -41,6 +44,17 @@ class App extends Component {
   }
 
   render() {
+    let content;
+    if (this.state.loading === true) {
+      content = (
+        <Loading/>
+      )
+    } else {
+      content = (
+        <SpyList spies={this.state.spies}/>
+      )
+    }
+
     return (
       <div className="App">
         <header className="mb-4">
@@ -51,7 +65,7 @@ class App extends Component {
           </nav>
         </header>
         <div className="container-fluid">
-          <SpyList spies={this.state.spies}/>
+          {content}
         </div>
       </div>
     );
