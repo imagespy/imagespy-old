@@ -6,4 +6,4 @@ services:
 script:
   - TAG=master make build
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
-  - docker push imagespy:master
+  - docker push imagespy/imagespy:master

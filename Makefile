@@ -9,4 +9,4 @@ build_ui:
 	docker run --rm -v "$(PWD)/ui:/ui" --workdir /ui node:9.2.0 bash -c 'yarn install && PUBLIC_URL=/app yarn build'
 
 build_image:
-	docker build -t imagespy:$(TAG) .
+	docker build -t imagespy/imagespy:$(TAG) .
