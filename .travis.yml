@@ -7,12 +7,14 @@ script:
   - make build
 
 deploy:
-  provider: script
-  script: travis/deploy_master.sh
-  on:
-    branch: master
+  - provider: script
+    script: travis/deploy_master.sh
+    skip_cleanup: true
+    on:
+      branch: master
 
-  provider: script
-  script: travis/deploy_release.sh
-  on:
-    tags: true
+  - provider: script
+    script: travis/deploy_release.sh
+    skip_cleanup: true
+    on:
+      tags: true
