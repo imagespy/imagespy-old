@@ -9,6 +9,7 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
+      'error': null,
       'loading': true,
       'spies': [],
       'spiesForSearch': []
@@ -27,7 +28,19 @@ class App extends Component {
       })
     })
     .catch((err) => {
-      console.log(err)
+      let msg = '';
+      try {
+        let content = JSON.parse(err.response.data);
+        msg = content['message'];
+      } catch (e) {
+        msg = err.response.data;
+      }
+      this.setState({
+        error: {
+          message: msg,
+          responseCode: err.response.status
+        }
+      });
     });
   }
 
@@ -48,11 +61,20 @@ class App extends Component {
     if (this.state.loading === true) {
       content = (
         <Loading/>
-      )
+      );
     } else {
       content = (
         <SpyList spies={this.state.spies}/>
-      )
+      );
+    }
+
+    if (this.state.error !== null) {
+      content = (
+        <div className="alert alert-danger" role="alert">
+          HTTP Response Code: {this.state.error.responseCode}<br/>
+          Message: {this.state.error.message}
+        </div>
+      );
     }
 
     return (
