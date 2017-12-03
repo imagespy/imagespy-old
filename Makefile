@@ -1,4 +1,4 @@
-TAG ?= latest
+TAG ?= master
 
 build: build_ui build_server build_image
 

@@ -4,6 +4,15 @@ services:
   - docker
 
 script:
-  - TAG=master make build
-  - docker login -u $DOCKER_USER -p $DOCKER_PASS
-  - docker push imagespy/imagespy:master
+  - make build
+
+deploy:
+  provider: script
+  script: travis/deploy_master.sh
+  on:
+    branch: master
+
+  provider: script
+  script: travis/deploy_release.sh
+  on:
+    tags: true
