@@ -1,4 +1,6 @@
-# ImageSpy
+# Image Spy
+
+![imagespy](https://raw.githubusercontent.com/imagespy/imagespy/master/imagespy.gif)
 
 ## Usage
 
