@@ -78,9 +78,14 @@ func (r *requester) send(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", userAgent)
 	Log.Debug(fmt.Sprintf("Sending \"%s\" request to \"%s\"", req.Method, req.URL.String()))
 	resp, err := r.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
 	if resp.Header.Get(httpcache.XFromCache) == "1" {
 		Log.Debug(fmt.Sprintf("\"%s\" served from cache", req.URL.String()))
 	}
+
 	if resp != nil {
 		Log.Debug(fmt.Sprintf("Received status code \"%d\" for request to \"%s\"", resp.StatusCode, req.URL.String()))
 	}

@@ -47,7 +47,7 @@
   branch = "master"
   name = "github.com/imagespy/client-go"
   packages = ["."]
-  revision = "a8384fac2d2446e1835e152ca98bc48dbb0b1a4f"
+  revision = "95c9f6ec58eab6a30b336da57fb3f4c9c992eecc"
 
 [[projects]]
   name = "github.com/julienschmidt/httprouter"
