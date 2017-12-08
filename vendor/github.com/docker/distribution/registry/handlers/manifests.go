@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/docker/distribution"
-	ctxu "github.com/docker/distribution/context"
-	"github.com/docker/distribution/digest"
+	dcontext "github.com/docker/distribution/context"
 	"github.com/docker/distribution/manifest/manifestlist"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
@@ -17,6 +16,7 @@ import (
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/distribution/registry/auth"
 	"github.com/gorilla/handlers"
+	"github.com/opencontainers/go-digest"
 )
 
 // These constants determine which architecture and OS to choose from a
@@ -27,36 +27,36 @@ const (
 	maxManifestBodySize = 4 << 20
 )
 
-// imageManifestDispatcher takes the request context and builds the
-// appropriate handler for handling image manifest requests.
-func imageManifestDispatcher(ctx *Context, r *http.Request) http.Handler {
-	imageManifestHandler := &imageManifestHandler{
+// manifestDispatcher takes the request context and builds the
+// appropriate handler for handling manifest requests.
+func manifestDispatcher(ctx *Context, r *http.Request) http.Handler {
+	manifestHandler := &manifestHandler{
 		Context: ctx,
 	}
 	reference := getReference(ctx)
-	dgst, err := digest.ParseDigest(reference)
+	dgst, err := digest.Parse(reference)
 	if err != nil {
 		// We just have a tag
-		imageManifestHandler.Tag = reference
+		manifestHandler.Tag = reference
 	} else {
-		imageManifestHandler.Digest = dgst
+		manifestHandler.Digest = dgst
 	}
 
 	mhandler := handlers.MethodHandler{
-		"GET":  http.HandlerFunc(imageManifestHandler.GetImageManifest),
-		"HEAD": http.HandlerFunc(imageManifestHandler.GetImageManifest),
+		"GET":  http.HandlerFunc(manifestHandler.GetManifest),
+		"HEAD": http.HandlerFunc(manifestHandler.GetManifest),
 	}
 
 	if !ctx.readOnly {
-		mhandler["PUT"] = http.HandlerFunc(imageManifestHandler.PutImageManifest)
-		mhandler["DELETE"] = http.HandlerFunc(imageManifestHandler.DeleteImageManifest)
+		mhandler["PUT"] = http.HandlerFunc(manifestHandler.PutManifest)
+		mhandler["DELETE"] = http.HandlerFunc(manifestHandler.DeleteManifest)
 	}
 
 	return mhandler
 }
 
-// imageManifestHandler handles http operations on image manifests.
-type imageManifestHandler struct {
+// manifestHandler handles http operations on image manifests.
+type manifestHandler struct {
 	*Context
 
 	// One of tag or digest gets set, depending on what is present in context.
@@ -64,9 +64,9 @@ type imageManifestHandler struct {
 	Digest digest.Digest
 }
 
-// GetImageManifest fetches the image manifest from the storage backend, if it exists.
-func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http.Request) {
-	ctxu.GetLogger(imh).Debug("GetImageManifest")
+// GetManifest fetches the image manifest from the storage backend, if it exists.
+func (imh *manifestHandler) GetManifest(w http.ResponseWriter, r *http.Request) {
+	dcontext.GetLogger(imh).Debug("GetImageManifest")
 	manifests, err := imh.Repository.Manifests(imh)
 	if err != nil {
 		imh.Errors = append(imh.Errors, err)
@@ -78,7 +78,11 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 		tags := imh.Repository.Tags(imh)
 		desc, err := tags.Get(imh, imh.Tag)
 		if err != nil {
-			imh.Errors = append(imh.Errors, v2.ErrorCodeManifestUnknown.WithDetail(err))
+			if _, ok := err.(distribution.ErrTagUnknown); ok {
+				imh.Errors = append(imh.Errors, v2.ErrorCodeManifestUnknown.WithDetail(err))
+			} else {
+				imh.Errors = append(imh.Errors, errcode.ErrorCodeUnknown.WithDetail(err))
+			}
 			return
 		}
 		imh.Digest = desc.Digest
@@ -95,7 +99,11 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 	}
 	manifest, err = manifests.Get(imh, imh.Digest, options...)
 	if err != nil {
-		imh.Errors = append(imh.Errors, v2.ErrorCodeManifestUnknown.WithDetail(err))
+		if _, ok := err.(distribution.ErrManifestUnknownRevision); ok {
+			imh.Errors = append(imh.Errors, v2.ErrorCodeManifestUnknown.WithDetail(err))
+		} else {
+			imh.Errors = append(imh.Errors, errcode.ErrorCodeUnknown.WithDetail(err))
+		}
 		return
 	}
 
@@ -135,7 +143,7 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 	// matching the digest.
 	if imh.Tag != "" && isSchema2 && !supportsSchema2 {
 		// Rewrite manifest in schema1 format
-		ctxu.GetLogger(imh).Infof("rewriting manifest %s in schema1 format to support old client", imh.Digest.String())
+		dcontext.GetLogger(imh).Infof("rewriting manifest %s in schema1 format to support old client", imh.Digest.String())
 
 		manifest, err = imh.convertSchema2Manifest(schema2Manifest)
 		if err != nil {
@@ -143,7 +151,7 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 		}
 	} else if imh.Tag != "" && isManifestList && !supportsManifestList {
 		// Rewrite manifest in schema1 format
-		ctxu.GetLogger(imh).Infof("rewriting manifest list %s in schema1 format to support old client", imh.Digest.String())
+		dcontext.GetLogger(imh).Infof("rewriting manifest list %s in schema1 format to support old client", imh.Digest.String())
 
 		// Find the image manifest corresponding to the default
 		// platform
@@ -162,7 +170,11 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 
 		manifest, err = manifests.Get(imh, manifestDigest)
 		if err != nil {
-			imh.Errors = append(imh.Errors, v2.ErrorCodeManifestUnknown.WithDetail(err))
+			if _, ok := err.(distribution.ErrManifestUnknownRevision); ok {
+				imh.Errors = append(imh.Errors, v2.ErrorCodeManifestUnknown.WithDetail(err))
+			} else {
+				imh.Errors = append(imh.Errors, errcode.ErrorCodeUnknown.WithDetail(err))
+			}
 			return
 		}
 
@@ -172,6 +184,8 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 			if err != nil {
 				return
 			}
+		} else {
+			imh.Digest = manifestDigest
 		}
 	}
 
@@ -187,12 +201,16 @@ func (imh *imageManifestHandler) GetImageManifest(w http.ResponseWriter, r *http
 	w.Write(p)
 }
 
-func (imh *imageManifestHandler) convertSchema2Manifest(schema2Manifest *schema2.DeserializedManifest) (distribution.Manifest, error) {
+func (imh *manifestHandler) convertSchema2Manifest(schema2Manifest *schema2.DeserializedManifest) (distribution.Manifest, error) {
 	targetDescriptor := schema2Manifest.Target()
 	blobs := imh.Repository.Blobs(imh)
 	configJSON, err := blobs.Get(imh, targetDescriptor.Digest)
 	if err != nil {
-		imh.Errors = append(imh.Errors, v2.ErrorCodeManifestInvalid.WithDetail(err))
+		if err == distribution.ErrBlobUnknown {
+			imh.Errors = append(imh.Errors, v2.ErrorCodeManifestInvalid.WithDetail(err))
+		} else {
+			imh.Errors = append(imh.Errors, errcode.ErrorCodeUnknown.WithDetail(err))
+		}
 		return nil, err
 	}
 
@@ -232,9 +250,9 @@ func etagMatch(r *http.Request, etag string) bool {
 	return false
 }
 
-// PutImageManifest validates and stores an image in the registry.
-func (imh *imageManifestHandler) PutImageManifest(w http.ResponseWriter, r *http.Request) {
-	ctxu.GetLogger(imh).Debug("PutImageManifest")
+// PutManifest validates and stores a manifest in the registry.
+func (imh *manifestHandler) PutManifest(w http.ResponseWriter, r *http.Request) {
+	dcontext.GetLogger(imh).Debug("PutImageManifest")
 	manifests, err := imh.Repository.Manifests(imh)
 	if err != nil {
 		imh.Errors = append(imh.Errors, err)
@@ -242,7 +260,7 @@ func (imh *imageManifestHandler) PutImageManifest(w http.ResponseWriter, r *http
 	}
 
 	var jsonBuf bytes.Buffer
-	if err := copyFullPayload(w, r, &jsonBuf, maxManifestBodySize, imh, "image manifest PUT"); err != nil {
+	if err := copyFullPayload(imh, w, r, &jsonBuf, maxManifestBodySize, "image manifest PUT"); err != nil {
 		// copyFullPayload reports the error if necessary
 		imh.Errors = append(imh.Errors, v2.ErrorCodeManifestInvalid.WithDetail(err.Error()))
 		return
@@ -257,7 +275,7 @@ func (imh *imageManifestHandler) PutImageManifest(w http.ResponseWriter, r *http
 
 	if imh.Digest != "" {
 		if desc.Digest != imh.Digest {
-			ctxu.GetLogger(imh).Errorf("payload digest does match: %q != %q", desc.Digest, imh.Digest)
+			dcontext.GetLogger(imh).Errorf("payload digest does match: %q != %q", desc.Digest, imh.Digest)
 			imh.Errors = append(imh.Errors, v2.ErrorCodeDigestInvalid)
 			return
 		}
@@ -340,7 +358,7 @@ func (imh *imageManifestHandler) PutImageManifest(w http.ResponseWriter, r *http
 		// NOTE(stevvooe): Given the behavior above, this absurdly unlikely to
 		// happen. We'll log the error here but proceed as if it worked. Worst
 		// case, we set an empty location header.
-		ctxu.GetLogger(imh).Errorf("error building manifest url from digest: %v", err)
+		dcontext.GetLogger(imh).Errorf("error building manifest url from digest: %v", err)
 	}
 
 	w.Header().Set("Location", location)
@@ -350,7 +368,7 @@ func (imh *imageManifestHandler) PutImageManifest(w http.ResponseWriter, r *http
 
 // applyResourcePolicy checks whether the resource class matches what has
 // been authorized and allowed by the policy configuration.
-func (imh *imageManifestHandler) applyResourcePolicy(manifest distribution.Manifest) error {
+func (imh *manifestHandler) applyResourcePolicy(manifest distribution.Manifest) error {
 	allowedClasses := imh.App.Config.Policy.Repository.Classes
 	if len(allowedClasses) == 0 {
 		return nil
@@ -362,7 +380,7 @@ func (imh *imageManifestHandler) applyResourcePolicy(manifest distribution.Manif
 		class = "image"
 	case *schema2.DeserializedManifest:
 		switch m.Config.MediaType {
-		case schema2.MediaTypeConfig:
+		case schema2.MediaTypeImageConfig:
 			class = "image"
 		case schema2.MediaTypePluginConfig:
 			class = "plugin"
@@ -415,9 +433,9 @@ func (imh *imageManifestHandler) applyResourcePolicy(manifest distribution.Manif
 
 }
 
-// DeleteImageManifest removes the manifest with the given digest from the registry.
-func (imh *imageManifestHandler) DeleteImageManifest(w http.ResponseWriter, r *http.Request) {
-	ctxu.GetLogger(imh).Debug("DeleteImageManifest")
+// DeleteManifest removes the manifest with the given digest from the registry.
+func (imh *manifestHandler) DeleteManifest(w http.ResponseWriter, r *http.Request) {
+	dcontext.GetLogger(imh).Debug("DeleteImageManifest")
 
 	manifests, err := imh.Repository.Manifests(imh)
 	if err != nil {
