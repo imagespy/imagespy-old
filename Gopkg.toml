@@ -23,7 +23,7 @@
 
 [[constraint]]
   name = "github.com/docker/docker"
-  version = "1.13.1"
+  version = "=17.03.2-ce"
 
 [[constraint]]
   branch = "master"

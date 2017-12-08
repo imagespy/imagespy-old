@@ -22,8 +22,8 @@
 [[projects]]
   name = "github.com/docker/docker"
   packages = ["api/types","api/types/blkiodev","api/types/container","api/types/events","api/types/filters","api/types/mount","api/types/network","api/types/reference","api/types/registry","api/types/strslice","api/types/swarm","api/types/time","api/types/versions","api/types/volume","client","pkg/tlsconfig"]
-  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
-  version = "v1.13.1"
+  revision = "f5ec1e2936dcbe7b5001c2b817188b095c700c27"
+  version = "v17.03.2-ce"
 
 [[projects]]
   name = "github.com/docker/go-connections"
@@ -88,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2d532d0be502931b67418cf428f08d6b244f56718de521d3fe43b3b511ea829d"
+  inputs-digest = "b9988380545603c955233bac81b4b1afc7932e7a08ed3a26f664eab153708253"
   solver-name = "gps-cdcl"
   solver-version = 1
