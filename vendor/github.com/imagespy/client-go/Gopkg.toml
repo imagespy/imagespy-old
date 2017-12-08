@@ -28,3 +28,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/gregjones/httpcache"
+
+  [[constraint]]
+    branch = "master"
+    name = "github.com/docker/distribution"

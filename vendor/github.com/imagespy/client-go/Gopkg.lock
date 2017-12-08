@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/die-net/lrucache"
   packages = ["."]
@@ -9,13 +15,37 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/docker/distribution"
+  packages = ["digestset","reference"]
+  revision = "f4118485915abb8b163442717326597908eee6aa"
+
+[[projects]]
+  branch = "master"
   name = "github.com/gregjones/httpcache"
   packages = ["."]
   revision = "2bcd89a1743fd4b373f7370ce8ddc14dfbd18229"
 
+[[projects]]
+  name = "github.com/opencontainers/go-digest"
+  packages = ["."]
+  revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
+  version = "v1.0.0-rc1"
+
+[[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
+  version = "v1.1.4"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "79442142112cc12d01d9873dd982f6f0f893020250f2167a6f6cd88a330c72a0"
+  inputs-digest = "a700bb61ae9c5fb2397d91ad412635963b68ccf471d68c0da8ac73c765f77417"
   solver-name = "gps-cdcl"
   solver-version = 1

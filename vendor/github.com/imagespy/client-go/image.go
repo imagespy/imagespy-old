@@ -24,12 +24,22 @@ type ImageSpy struct {
 // ImageSpyService handles interactions.
 type ImageSpyService struct {
 	cacheUnknownImages bool
+	registryWhitelist  map[string]struct{}
 	requester          *requester
 }
 
 // Get retrieves an ImageSpy.
 // Creates the ImageSpy if it does not exist.
 func (is *ImageSpyService) Get(name string) (*ImageSpy, error) {
+	whitelisted, err := isRegistryWhitelisted(name, is.registryWhitelist)
+	if err != nil {
+		return nil, err
+	}
+
+	if whitelisted == false {
+		return nil, fmt.Errorf("Registry domain of image %s is not whitelisted", name)
+	}
+
 	resp, err := is.requester.readAsJSON("/v1/images/" + name)
 	if err != nil {
 		return nil, err

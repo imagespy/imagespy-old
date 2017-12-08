@@ -119,6 +119,12 @@ func (c *ClientV1) WithTimeout(s string) *ClientV1 {
 	return c
 }
 
+// WithRegistryWhitelist allows specifying the registries to send requests to.
+func (c *ClientV1) WithRegistryWhitelist(whitelist map[string]struct{}) *ClientV1 {
+	c.ImageSpy.registryWhitelist = whitelist
+	return c
+}
+
 // NewClientV1 returns a new client for the V1 HTTP API.
 func NewClientV1() *ClientV1 {
 	httpClient := &http.Client{}
@@ -131,6 +137,6 @@ func NewClientV1() *ClientV1 {
 	t := httpcache.NewTransport(cache)
 	t.Transport = httpClient.Transport
 	httpClient.Transport = t
-	c.WithHTTPClient(httpClient).WithBaseURL(DefaultAPIEndpoint).WithTimeout("5s")
+	c.WithHTTPClient(httpClient).WithBaseURL(DefaultAPIEndpoint).WithTimeout("5s").WithRegistryWhitelist(DefaultRegistryWhitelist)
 	return c
 }

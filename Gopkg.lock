@@ -44,10 +44,10 @@
   revision = "2bcd89a1743fd4b373f7370ce8ddc14dfbd18229"
 
 [[projects]]
-  branch = "master"
   name = "github.com/imagespy/client-go"
   packages = ["."]
-  revision = "95c9f6ec58eab6a30b336da57fb3f4c9c992eecc"
+  revision = "06c65a53821b6871b5d6f6391fc4a84e34c36c1e"
+  version = "v0.1.0"
 
 [[projects]]
   name = "github.com/julienschmidt/httprouter"
@@ -94,6 +94,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5ec9e80302cac7853d8112a668ae210b96e2c09a47a689cb49bc252acec03cc"
+  inputs-digest = "9e4d439f33f71f729120726d9bbb9eaf2da3ba142694d51a64e5b61d69cd4ce5"
   solver-name = "gps-cdcl"
   solver-version = 1
